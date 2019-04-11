@@ -109,6 +109,14 @@ func updateState(scene *Scene) {
 	}
 }
 
+func detectCollisions(scene *Scene) {
+	for _, obstacle := range scene.Obstacles {
+		if intersectRect(scene.Player, obstacle) {
+			panic("HIT!!!!!!!!!!!!!!!!!!!!!!!!!")
+		}
+	}
+}
+
 func intersectRect(object1 *Object, object2 *Object) bool {
 	object1Right := object1.position.X + object1.sprite.Frame().W()
 	object2Right := object2.position.X + object2.sprite.Frame().W()
@@ -131,19 +139,6 @@ func intersectRect(object1 *Object, object2 *Object) bool {
 		object2Right)
 
 	return collides
-}
-
-func detectCollisions(scene *Scene) {
-	for _, obstacle := range scene.Obstacles {
-		// if obstacle.position.Y == scene.Player.position.Y && obstacle.position.X == scene.Player.position.X {
-		// 	fmt.Println(index)
-		// 	panic("HIT!!!!!!!!!!!!!!!")
-		// }
-
-		if intersectRect(scene.Player, obstacle) {
-			panic("HIT!!!!!!!!!!!!!!!!!!!!!!!!!")
-		}
-	}
 }
 
 // render is where we render graphics after all the input and game state has been processed.
