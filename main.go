@@ -17,8 +17,8 @@ const (
 	speed        = 30
 )
 
-// Player represents the snowboarder
-type Player struct {
+// Object represents an item in the game (player, obstacle, etc...)
+type Object struct {
 	position pixel.Vec
 	velocity pixel.Vec
 	sprite   *pixel.Sprite
@@ -53,13 +53,19 @@ func run() {
 		panic(err)
 	}
 
-	player := &Player{
+	player := &Object{
 		position: win.Bounds().Center(),
 		velocity: pixel.V(0, -speed),
 		sprite:   pixel.NewSprite(pic, pic.Bounds()),
 	}
-	win.Clear(colornames.Skyblue)
-	player.sprite.Draw(win, pixel.IM.Moved(player.position))
+
+	temp := &Object{
+		position: win.Bounds().Center(),
+		velocity: pixel.V(0, 0),
+		sprite:   pixel.NewSprite(pic, pic.Bounds()),
+	}
+	// win.Clear(colornames.Skyblue)
+	// player.sprite.Draw(win, pixel.IM.Moved(player.position))
 
 	last := time.Now()
 	for !win.Closed() {
@@ -81,6 +87,7 @@ func run() {
 		player.position = pixel.V(newX, newY)
 
 		win.Clear(colornames.Skyblue)
+		temp.sprite.Draw(win, pixel.IM.Moved(temp.position))
 		player.sprite.Draw(win, pixel.IM.Moved(player.position))
 
 		win.Update()
