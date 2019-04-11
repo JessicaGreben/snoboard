@@ -2,6 +2,7 @@ package main
 
 import (
 	"image"
+	_ "image/png"
 	"os"
 
 	"github.com/faiface/pixel"
@@ -38,7 +39,7 @@ func run() {
 		panic(err)
 	}
 
-	pic, err := loadPicture("sheet.png")
+	pic, err := loadPicture("gopher-happy.png")
 	if err != nil {
 		panic(err)
 	}
@@ -46,7 +47,7 @@ func run() {
 	sprite := pixel.NewSprite(pic, pic.Bounds())
 
 	win.Clear(colornames.Skyblue)
-	sprite.Draw(win, pixel.IM)
+	sprite.Draw(win, pixel.IM.Moved(win.Bounds().Center()))
 
 	for !win.Closed() {
 		win.Update()
