@@ -4,6 +4,7 @@ import (
 	"image"
 	_ "image/png"
 	"os"
+	"time"
 
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/pixelgl"
@@ -13,7 +14,15 @@ import (
 const (
 	windowWidth  = 1024
 	windowHeight = 768
+	speed        = 30
 )
+
+// Player represents the snowboarder
+type Player struct {
+	position pixel.Vec
+	velocity pixel.Vec
+	sprite   *pixel.Sprite
+}
 
 func loadPicture(path string) (pixel.Picture, error) {
 	file, err := os.Open(path)
@@ -44,12 +53,36 @@ func run() {
 		panic(err)
 	}
 
-	sprite := pixel.NewSprite(pic, pic.Bounds())
-
+	player := &Player{
+		position: win.Bounds().Center(),
+		velocity: pixel.V(0, -speed),
+		sprite:   pixel.NewSprite(pic, pic.Bounds()),
+	}
 	win.Clear(colornames.Skyblue)
-	sprite.Draw(win, pixel.IM.Moved(win.Bounds().Center()))
+	player.sprite.Draw(win, pixel.IM.Moved(player.position))
 
+	last := time.Now()
 	for !win.Closed() {
+		dt := time.Since(last).Seconds()
+		last = time.Now()
+
+		newVelX := float64(0)
+		if win.Pressed(pixelgl.KeyLeft) {
+			newVelX -= speed
+		}
+		if win.Pressed(pixelgl.KeyRight) {
+			newVelX += speed
+		}
+
+		player.velocity = pixel.V(newVelX, player.velocity.Y)
+
+		newX := player.position.X + player.velocity.X*dt
+		newY := player.position.Y + player.velocity.Y*dt
+		player.position = pixel.V(newX, newY)
+
+		win.Clear(colornames.Skyblue)
+		player.sprite.Draw(win, pixel.IM.Moved(player.position))
+
 		win.Update()
 	}
 }
