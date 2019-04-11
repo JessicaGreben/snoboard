@@ -8,7 +8,9 @@ import (
 
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/pixelgl"
+	"github.com/faiface/pixel/text"
 	"golang.org/x/image/colornames"
+	"golang.org/x/image/font/basicfont"
 	"storj.io/snoboard/graphics"
 )
 
@@ -27,6 +29,7 @@ type Scene struct {
 	CameraPosition        pixel.Vec
 	Player                *Object
 	Obstacles             []*Object
+	Dead                  bool
 }
 
 // Object represents an item in the game (player, obstacle, etc...)
@@ -111,7 +114,7 @@ func updateState(scene *Scene) {
 func detectCollisions(scene *Scene) {
 	for _, obstacle := range scene.Obstacles {
 		if intersectRect(scene.Player, obstacle) {
-			panic("HIT!!!!!!!!!!!!!!!!!!!!!!!!!")
+			scene.Dead = true
 		}
 	}
 }
@@ -122,20 +125,24 @@ func intersectRect(object1 *Object, object2 *Object) bool {
 	object1Bottom := object1.position.Y + object1.sprite.Frame().H()
 	object2Bottom := object2.position.Y + object2.sprite.Frame().H()
 
+	// HACK: We had to account for half of speed for some reason on detecting where
+	// the player top position is. I have a feeling this has to do with
+	// detecting collissions after applying speed but it's unclear.
 	collides := !(object2.position.X > object1Right ||
 		object2Right < object1.position.X ||
 		object2.position.Y > object1Bottom ||
-		object2Bottom < object1.position.Y)
+		object2Bottom < object1.position.Y+(speed/2))
 
-	fmt.Printf("[TOP: %4.0f BOTTOM: %4.0f LEFT: %4.0f RIGHT: %4.0f]\t[TOP: %4.0f BOTTOM: %4.0f LEFT: %4.0f RIGHT: %4.0f]\n",
-		object1.position.Y,
-		object1Bottom,
-		object1.position.X,
-		object1Right,
-		object2.position.Y,
-		object2Bottom,
-		object2.position.X,
-		object2Right)
+	// Used for debug purposes.
+	// fmt.Printf("[TOP: %4.0f BOTTOM: %4.0f LEFT: %4.0f RIGHT: %4.0f]\t[TOP: %4.0f BOTTOM: %4.0f LEFT: %4.0f RIGHT: %4.0f]\n",
+	// 	object1.position.Y,
+	// 	object1Bottom,
+	// 	object1.position.X,
+	// 	object1Right,
+	// 	object2.position.Y,
+	// 	object2Bottom,
+	// 	object2.position.X,
+	// 	object2Right)
 
 	return collides
 }
@@ -152,6 +159,12 @@ func render(scene *Scene) {
 		o.sprite.Draw(scene.Window, pixel.IM.Moved(o.position))
 	}
 
+	if scene.Dead {
+		atlas := text.NewAtlas(basicfont.Face7x13, text.ASCII)
+		basicTxt := text.New(pixel.V(scene.Player.position.X-200, scene.Player.position.Y+200), atlas)
+		fmt.Fprintln(basicTxt, "Hello, text!")
+		basicTxt.Draw(scene.Window, pixel.IM.Scaled(basicTxt.Orig, 4))
+	}
 	scene.Window.Update()
 }
 
