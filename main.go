@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	_ "image/png"
 	"math/rand"
 	"time"
@@ -90,12 +91,10 @@ func updateState(scene *Scene) {
 		if o.position.Y > player.position.Y+float64(400) {
 			lastIndex = i
 		}
-
-		if o.position.Y == player.position.Y && o.position.X == player.position.X {
-			// collision detection
-		}
 	}
 	scene.Obstacles = scene.Obstacles[lastIndex:]
+
+	detectCollisions(scene)
 
 	// If it has been 1 second since last obstacle then create a new one
 	if scene.TimeSinceLastObstacle > 1 {
@@ -107,6 +106,43 @@ func updateState(scene *Scene) {
 		}
 		scene.Obstacles = append(scene.Obstacles, newObj)
 		scene.TimeSinceLastObstacle = 0
+	}
+}
+
+func intersectRect(object1 *Object, object2 *Object) bool {
+	object1Right := object1.position.X + object1.sprite.Frame().W()
+	object2Right := object2.position.X + object2.sprite.Frame().W()
+	object1Bottom := object1.position.Y + object1.sprite.Frame().H()
+	object2Bottom := object2.position.Y + object2.sprite.Frame().H()
+
+	collides := !(object2.position.X > object1Right ||
+		object2Right < object1.position.X ||
+		object2.position.Y > object1Bottom ||
+		object2Bottom < object1.position.Y)
+
+	fmt.Printf("[TOP: %4.0f BOTTOM: %4.0f LEFT: %4.0f RIGHT: %4.0f]\t[TOP: %4.0f BOTTOM: %4.0f LEFT: %4.0f RIGHT: %4.0f]\n",
+		object1.position.Y,
+		object1Bottom,
+		object1.position.X,
+		object1Right,
+		object2.position.Y,
+		object2Bottom,
+		object2.position.X,
+		object2Right)
+
+	return collides
+}
+
+func detectCollisions(scene *Scene) {
+	for _, obstacle := range scene.Obstacles {
+		// if obstacle.position.Y == scene.Player.position.Y && obstacle.position.X == scene.Player.position.X {
+		// 	fmt.Println(index)
+		// 	panic("HIT!!!!!!!!!!!!!!!")
+		// }
+
+		if intersectRect(scene.Player, obstacle) {
+			panic("HIT!!!!!!!!!!!!!!!!!!!!!!!!!")
+		}
 	}
 }
 
