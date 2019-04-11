@@ -112,10 +112,14 @@ func updateState(scene *Scene) {
 	// If it has been 1 second since last obstacle then create a new one
 	if scene.TimeSinceLastObstacle > 1 {
 		randX := rand.Intn(2*windowWidth) - windowWidth
+		sprite := scene.Sprites.harddrive
+		if rand.Intn(2) == 0 {
+			sprite = scene.Sprites.server
+		}
 		newObj := &Object{
 			position: player.position.Add(pixel.V(float64(randX), -400)),
 			velocity: pixel.V(0, 0),
-			sprite:   scene.Sprites.server,
+			sprite:   sprite,
 		}
 		scene.Obstacles = append(scene.Obstacles, newObj)
 		scene.TimeSinceLastObstacle = 0
@@ -197,7 +201,6 @@ func initializeScene() *Scene {
 	scene.Player = &Object{
 		position: win.Bounds().Center(),
 		velocity: pixel.V(0, -speed),
-		sprite:   getSprite("forward"),
 	}
 
 	scene.Sprites = &Sprites{
