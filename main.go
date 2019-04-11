@@ -29,6 +29,7 @@ type Scene struct {
 	CameraPosition        pixel.Vec
 	Player                *Object
 	Obstacles             []*Object
+	Sprites               *Sprites
 	Dead                  bool
 }
 
@@ -37,6 +38,19 @@ type Object struct {
 	position pixel.Vec
 	velocity pixel.Vec
 	sprite   *pixel.Sprite
+}
+
+// Sprites are all the images we use
+type Sprites struct {
+	forward   *pixel.Sprite
+	left      *pixel.Sprite
+	right     *pixel.Sprite
+	server    *pixel.Sprite
+	harddrive *pixel.Sprite
+	jump      *pixel.Sprite
+	jumpleft  *pixel.Sprite
+	jumpright *pixel.Sprite
+	wipeout   *pixel.Sprite
 }
 
 func main() {
@@ -63,14 +77,14 @@ func processInput(scene *Scene) {
 	newVelX := float64(0)
 	if scene.Window.Pressed(pixelgl.KeyLeft) {
 		newVelX -= speed
-		scene.Player.sprite = getSprite("left")
+		scene.Player.sprite = scene.Sprites.left
 	}
 	if scene.Window.Pressed(pixelgl.KeyRight) {
 		newVelX += speed
-		scene.Player.sprite = getSprite("right")
+		scene.Player.sprite = scene.Sprites.right
 	}
 	if !scene.Window.Pressed(pixelgl.KeyRight) && !scene.Window.Pressed(pixelgl.KeyLeft) {
-		scene.Player.sprite = getSprite("forward")
+		scene.Player.sprite = scene.Sprites.forward
 	}
 
 	player := scene.Player
@@ -101,10 +115,14 @@ func updateState(scene *Scene) {
 	// If it has been 1 second since last obstacle then create a new one
 	if scene.TimeSinceLastObstacle > 1 {
 		randX := rand.Intn(2*windowWidth) - windowWidth
+		sprite := scene.Sprites.harddrive
+		if rand.Intn(2) == 0 {
+			sprite = scene.Sprites.server
+		}
 		newObj := &Object{
 			position: player.position.Add(pixel.V(float64(randX), -400)),
 			velocity: pixel.V(0, 0),
-			sprite:   getSprite("serverrack"),
+			sprite:   sprite,
 		}
 		scene.Obstacles = append(scene.Obstacles, newObj)
 		scene.TimeSinceLastObstacle = 0
@@ -193,13 +211,23 @@ func initializeScene() *Scene {
 	}
 	scene.Window = win
 
-	player := &Object{
+	scene.Player = &Object{
 		position: win.Bounds().Center(),
 		velocity: pixel.V(0, -speed),
-		sprite:   getSprite("forward"),
 	}
 
-	scene.Player = player
+	scene.Sprites = &Sprites{
+		left:      getSprite("left"),
+		right:     getSprite("right"),
+		forward:   getSprite("forward"),
+		server:    getSprite("serverrack"),
+		harddrive: getSprite("harddrive"),
+		jump:      getSprite("jump"),
+		jumpleft:  getSprite("jumpleft"),
+		jumpright: getSprite("jumpright"),
+		wipeout:   getSprite("wipeout"),
+	}
+
 	scene.LastFrameTime = time.Now()
 	return scene
 }
