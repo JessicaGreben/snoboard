@@ -71,6 +71,8 @@ func run() {
 	for !win.Closed() {
 		dt := time.Since(last).Seconds()
 		last = time.Now()
+		cam := pixel.IM.Moved(win.Bounds().Center().Sub(player.position))
+		win.SetMatrix(cam)
 
 		newVelX := float64(0)
 		if win.Pressed(pixelgl.KeyLeft) {
@@ -86,7 +88,7 @@ func run() {
 		newY := player.position.Y + player.velocity.Y*dt
 		player.position = pixel.V(newX, newY)
 
-		win.Clear(colornames.Skyblue)
+		win.Clear(colornames.Blueviolet)
 		temp.sprite.Draw(win, pixel.IM.Moved(temp.position))
 		player.sprite.Draw(win, pixel.IM.Moved(player.position))
 
