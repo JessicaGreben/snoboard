@@ -94,7 +94,7 @@ func updateState(scene *Scene) {
 	}
 	scene.Obstacles = scene.Obstacles[lastIndex:]
 
-	detectCollisions(scene)
+	// detectCollisions(scene)
 
 	// If it has been 1 second since last obstacle then create a new one
 	if scene.TimeSinceLastObstacle > 1 {
