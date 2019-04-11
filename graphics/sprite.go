@@ -1,4 +1,4 @@
-package main
+package graphics
 
 import (
 	"encoding/csv"
@@ -11,7 +11,20 @@ import (
 	"github.com/pkg/errors"
 )
 
-func loadAnimationSheet(sheetPath, descPath string, frameWidth float64) (sheet pixel.Picture, anims map[string][]pixel.Rect, err error) {
+func LoadPicture(path string) (pixel.Picture, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+	img, _, err := image.Decode(file)
+	if err != nil {
+		return nil, err
+	}
+	return pixel.PictureDataFromImage(img), nil
+}
+
+func LoadAnimationSheet(sheetPath, descPath string, frameWidth float64) (sheet pixel.Picture, anims map[string][]pixel.Rect, err error) {
 	// total hack, nicely format the error at the end, so I don't have to type it every time
 	defer func() {
 		if err != nil {
