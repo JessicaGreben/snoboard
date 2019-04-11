@@ -25,7 +25,6 @@ type Scene struct {
 	TimeSinceLastFrame    float64
 	TimeSinceLastObstacle float64
 	CameraPosition        pixel.Vec
-	Background            *Object
 	Player                *Object
 	Obstacles             []*Object
 }
@@ -61,19 +60,24 @@ func processInput(scene *Scene) {
 	newVelX := float64(0)
 	if scene.Window.Pressed(pixelgl.KeyLeft) {
 		newVelX -= speed
+		scene.Player.sprite = getSprite("left")
 	}
 	if scene.Window.Pressed(pixelgl.KeyRight) {
 		newVelX += speed
+		scene.Player.sprite = getSprite("right")
+	}
+	if !scene.Window.Pressed(pixelgl.KeyRight) && !scene.Window.Pressed(pixelgl.KeyLeft) {
+		scene.Player.sprite = getSprite("forward")
 	}
 
-	scene.Player.velocity = pixel.V(newVelX, scene.Player.velocity.Y)
+	player := scene.Player
+	player.velocity = pixel.V(newVelX, player.velocity.Y)
+	newX := player.position.X + player.velocity.X*scene.TimeSinceLastFrame
+	newY := player.position.Y + player.velocity.Y*scene.TimeSinceLastFrame
+	player.position = pixel.V(newX, newY)
 
-	newX := scene.Player.position.X + scene.Player.velocity.X*scene.TimeSinceLastFrame
-	newY := scene.Player.position.Y + scene.Player.velocity.Y*scene.TimeSinceLastFrame
-	scene.Player.position = pixel.V(newX, newY)
-
-	camPosX := scene.Player.position.X - scene.Window.Bounds().Center().X
-	camPosY := scene.Player.position.Y - scene.Window.Bounds().Center().Y
+	camPosX := player.position.X - scene.Window.Bounds().Center().X
+	camPosY := player.position.Y - scene.Window.Bounds().Center().Y
 	scene.CameraPosition = pixel.V(camPosX, camPosY)
 }
 
@@ -81,11 +85,6 @@ func processInput(scene *Scene) {
 // Maybe update scores, object states that aren't related to input.
 func updateState(scene *Scene) {
 	player := scene.Player
-	backgroundSprite, err := graphics.LoadPicture("pot.png")
-	if err != nil {
-		panic(err)
-	}
-
 	var lastIndex int
 	for i, o := range scene.Obstacles {
 		if o.position.Y > player.position.Y+float64(400) {
@@ -94,7 +93,7 @@ func updateState(scene *Scene) {
 	}
 	scene.Obstacles = scene.Obstacles[lastIndex:]
 
-	// detectCollisions(scene)
+	detectCollisions(scene)
 
 	// If it has been 1 second since last obstacle then create a new one
 	if scene.TimeSinceLastObstacle > 1 {
@@ -102,7 +101,7 @@ func updateState(scene *Scene) {
 		newObj := &Object{
 			position: player.position.Add(pixel.V(float64(randX), -400)),
 			velocity: pixel.V(0, 0),
-			sprite:   pixel.NewSprite(backgroundSprite, backgroundSprite.Bounds()),
+			sprite:   getSprite("serverrack"),
 		}
 		scene.Obstacles = append(scene.Obstacles, newObj)
 		scene.TimeSinceLastObstacle = 0
@@ -148,16 +147,27 @@ func detectCollisions(scene *Scene) {
 
 // render is where we render graphics after all the input and game state has been processed.
 func render(scene *Scene) {
+	player := scene.Player
 	cameraMatrix := pixel.IM.Moved(scene.CameraPosition.Scaled(-1))
 	scene.Window.SetMatrix(cameraMatrix)
 
 	scene.Window.Clear(colornames.Blueviolet)
-	scene.Player.sprite.Draw(scene.Window, pixel.IM.Moved(scene.Player.position))
+	player.sprite.Draw(scene.Window, pixel.IM.Moved(player.position))
 	for _, o := range scene.Obstacles {
 		o.sprite.Draw(scene.Window, pixel.IM.Moved(o.position))
 	}
 
 	scene.Window.Update()
+}
+
+func getSprite(img string) *pixel.Sprite {
+	img = fmt.Sprintf("graphics/%s.png", img)
+	playerSprite, err := graphics.LoadPicture(img)
+	if err != nil {
+		panic(err)
+	}
+
+	return pixel.NewSprite(playerSprite, playerSprite.Bounds())
 }
 
 func initializeScene() *Scene {
@@ -175,17 +185,12 @@ func initializeScene() *Scene {
 	}
 	scene.Window = win
 
-	// Create the player object and assets.
-	playerSprite, err := graphics.LoadPicture("gopher-happy.png")
-	if err != nil {
-		panic(err)
-	}
-
 	player := &Object{
 		position: win.Bounds().Center(),
 		velocity: pixel.V(0, -speed),
-		sprite:   pixel.NewSprite(playerSprite, playerSprite.Bounds()),
+		sprite:   getSprite("forward"),
 	}
+
 	scene.Player = player
 	scene.LastFrameTime = time.Now()
 	return scene
