@@ -90,6 +90,10 @@ func updateState(scene *Scene) {
 		if o.position.Y > player.position.Y+float64(400) {
 			lastIndex = i
 		}
+
+		if o.position.Y == player.position.Y && o.position.X == player.position.X {
+			// collision detection
+		}
 	}
 	scene.Obstacles = scene.Obstacles[lastIndex:]
 
