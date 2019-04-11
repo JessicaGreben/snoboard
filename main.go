@@ -180,7 +180,7 @@ func render(scene *Scene) {
 	if scene.Dead {
 		atlas := text.NewAtlas(basicfont.Face7x13, text.ASCII)
 		basicTxt := text.New(pixel.V(scene.Player.position.X-200, scene.Player.position.Y+200), atlas)
-		fmt.Fprintln(basicTxt, "Hello, text!")
+		fmt.Fprintln(basicTxt, "DEAD!!!!")
 		basicTxt.Draw(scene.Window, pixel.IM.Scaled(basicTxt.Orig, 4))
 	}
 	scene.Window.Update()
