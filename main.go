@@ -110,6 +110,9 @@ func processInput(scene *Scene) {
 // updateState is where we update any game state.
 // Maybe update scores, object states that aren't related to input.
 func updateState(scene *Scene) {
+	if scene.Dead {
+		return
+	}
 	player := scene.Player
 	var lastIndex int
 	for i, o := range scene.Obstacles {
@@ -129,7 +132,7 @@ func updateState(scene *Scene) {
 			sprite = scene.Sprites.server
 		}
 		newObj := &Object{
-			position: player.position.Add(pixel.V(float64(randX), -500)),
+			position: player.position.Add(pixel.V(float64(randX), -700)),
 			velocity: pixel.V(0, 0),
 			sprite:   sprite,
 		}
