@@ -8,16 +8,14 @@ import (
 
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/pixelgl"
-	"github.com/faiface/pixel/text"
 	"golang.org/x/image/colornames"
-	"golang.org/x/image/font/basicfont"
 	"storj.io/snoboard/graphics"
 )
 
 const (
 	windowWidth  = 1024
 	windowHeight = 768
-	speed        = 80
+	speed        = 300
 )
 
 // Scene represents the root game scene. The scene references graphic resources, objects and game state.
@@ -88,10 +86,14 @@ func processInput(scene *Scene) {
 	}
 
 	player := scene.Player
-	player.velocity = pixel.V(newVelX, player.velocity.Y)
-	newX := player.position.X + player.velocity.X*scene.TimeSinceLastFrame
-	newY := player.position.Y + player.velocity.Y*scene.TimeSinceLastFrame
-	player.position = pixel.V(newX, newY)
+	if scene.Dead {
+		player.sprite = scene.Sprites.wipeout
+	} else {
+		player.velocity = pixel.V(newVelX, player.velocity.Y)
+		newX := player.position.X + player.velocity.X*scene.TimeSinceLastFrame
+		newY := player.position.Y + player.velocity.Y*scene.TimeSinceLastFrame
+		player.position = pixel.V(newX, newY)
+	}
 
 	camPosX := player.position.X - scene.Window.Bounds().Center().X
 	camPosY := player.position.Y - scene.Window.Bounds().Center().Y
@@ -120,7 +122,7 @@ func updateState(scene *Scene) {
 			sprite = scene.Sprites.server
 		}
 		newObj := &Object{
-			position: player.position.Add(pixel.V(float64(randX), -400)),
+			position: player.position.Add(pixel.V(float64(randX), -500)),
 			velocity: pixel.V(0, 0),
 			sprite:   sprite,
 		}
@@ -178,10 +180,11 @@ func render(scene *Scene) {
 	}
 
 	if scene.Dead {
-		atlas := text.NewAtlas(basicfont.Face7x13, text.ASCII)
-		basicTxt := text.New(pixel.V(scene.Player.position.X-200, scene.Player.position.Y+200), atlas)
-		fmt.Fprintln(basicTxt, "DEAD!!!!")
-		basicTxt.Draw(scene.Window, pixel.IM.Scaled(basicTxt.Orig, 4))
+		// atlas := text.NewAtlas(basicfont.Face7x13, text.ASCII)
+		// basicTxt := text.New(pixel.V(scene.Player.position.X-200, scene.Player.position.Y+200), atlas)
+		// fmt.Fprintln(basicTxt, "DEAD!!!!")
+		// basicTxt.Draw(scene.Window, pixel.IM.Scaled(basicTxt.Orig, 4))
+		player.sprite.Draw(scene.Window, pixel.IM.Moved(player.position))
 	}
 	scene.Window.Update()
 }
