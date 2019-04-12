@@ -101,7 +101,7 @@ func processInput(scene *Scene) {
 
 	camPosX := player.position.X - scene.Window.Bounds().Center().X
 	camPosY := player.position.Y - scene.Window.Bounds().Center().Y
-	scene.CameraPosition = pixel.V(camPosX, camPosY)
+	scene.CameraPosition = pixel.V(camPosX, camPosY-200)
 }
 
 // updateState is where we update any game state.
