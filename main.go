@@ -98,7 +98,7 @@ func updateScore(scene *Scene) {
 	basicTxt.Color = colornames.Black
 	fmt.Fprintf(basicTxt, "Score: %s\n", strconv.FormatFloat(score, 'f', 0, 64))
 	fmt.Fprintf(basicTxt, "Level: %v\n", scene.Level)
-	fmt.Fprintf(basicTxt, "Obstacle Rate: %v\n", strconv.FormatFloat(scene.Difficulty, 'f', 3, 64))
+	// fmt.Fprintf(basicTxt, "Obstacle Rate: %v\n", strconv.FormatFloat(scene.Difficulty, 'f', 3, 64))
 	basicTxt.Draw(scene.Window, pixel.IM.Scaled(basicTxt.Orig, 2))
 }
 
