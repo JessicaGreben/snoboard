@@ -36,19 +36,22 @@ type Scene struct {
 	Player                *Object
 	Obstacles             []*Object
 	Difficulty            float64
-	Level				  float64
+	Level                 float64
 	Sprites               *Sprites
 	Dead                  bool
 	Jumping               bool
+	JumpSpeed             float64
+	GroundSpeed           float64
 	TimeSinceJump         float64
 	Background            *pixel.Sprite
 }
 
 // Object represents an item in the game (player, obstacle, etc...)
 type Object struct {
-	position pixel.Vec
-	velocity pixel.Vec
-	sprite   *pixel.Sprite
+	position     pixel.Vec
+	velocity     pixel.Vec
+	jumpvelocity pixel.Vec
+	sprite       *pixel.Sprite
 }
 
 // Sprites are all the images we use
@@ -105,16 +108,20 @@ func updateScore(scene *Scene) {
 
 func increaseDifficulty(scene *Scene) {
 	scene.Difficulty -= scene.TimeSinceLastFrame * .05
-	
+
 	if scene.Difficulty < 0.5 {
 		scene.Level++
 		scene.Difficulty = 1
-		newYSpeed := scene.Player.velocity.Y * 1.5
-		scene.Player.velocity = pixel.V(scene.Player.velocity.X, newYSpeed)
+		scene.GroundSpeed = scene.GroundSpeed * 1.5
+		scene.JumpSpeed = scene.JumpSpeed * 1.5
+		if scene.Jumping {
+			scene.Player.velocity = pixel.V(scene.Player.velocity.X, -scene.JumpSpeed)
+		} else {
+			scene.Player.velocity = pixel.V(scene.Player.velocity.X, -scene.GroundSpeed)
+		}
 	}
 
 }
-
 
 // processInput is where we process any input events from the keyboard.
 func processInput(scene *Scene) {
@@ -142,7 +149,7 @@ func processInput(scene *Scene) {
 	if scene.Window.Pressed(pixelgl.KeySpace) && !scene.Jumping {
 		scene.Jumping = true
 		scene.TimeSinceJump = 0
-		scene.Player.velocity = pixel.V(0, -jumpSpeed)
+		scene.Player.velocity = pixel.V(0, -scene.JumpSpeed)
 	}
 	if scene.Window.Pressed(pixelgl.KeyEnter) && scene.Dead {
 		scene.Dead = false
@@ -177,7 +184,7 @@ func updateState(scene *Scene) {
 		scene.TimeSinceJump += scene.TimeSinceLastFrame
 		if scene.TimeSinceJump > jumpTime {
 			scene.Jumping = false
-			scene.Player.velocity = pixel.V(0, -speed)
+			scene.Player.velocity = pixel.V(0, -scene.GroundSpeed)
 		}
 	}
 	player := scene.Player
@@ -206,7 +213,7 @@ func updateState(scene *Scene) {
 		scene.Obstacles = append(scene.Obstacles, newObj)
 		scene.TimeSinceLastObstacle = 0
 	}
-	
+
 	increaseDifficulty(scene)
 }
 
@@ -288,7 +295,9 @@ func render(scene *Scene) {
 		basicTxt.Draw(scene.Window, pixel.IM.Scaled(basicTxt.Orig, 4))
 		scene.Level = 0
 		scene.Difficulty = 1
-		scene.Player.velocity = pixel.V(0, -speed)
+		scene.GroundSpeed = speed
+		scene.JumpSpeed = jumpSpeed
+		scene.Player.velocity = pixel.V(0, -scene.GroundSpeed)
 	}
 	updateScore(scene)
 	scene.Window.Update()
@@ -321,10 +330,11 @@ func initializeScene() *Scene {
 		panic(err)
 	}
 	scene.Window = win
-
+	scene.GroundSpeed = speed
+	scene.JumpSpeed = jumpSpeed
 	scene.Player = &Object{
 		position: win.Bounds().Center(),
-		velocity: pixel.V(0, -speed),
+		velocity: pixel.V(0, -scene.GroundSpeed),
 	}
 
 	scene.Sprites = &Sprites{
