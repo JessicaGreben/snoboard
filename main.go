@@ -19,6 +19,7 @@ const (
 	windowWidth  = 1024
 	windowHeight = 768
 	speed        = 300
+	jumpTime     = 1
 )
 
 // Scene represents the root game scene. The scene references graphic resources, objects and game state.
@@ -32,6 +33,8 @@ type Scene struct {
 	Obstacles             []*Object
 	Sprites               *Sprites
 	Dead                  bool
+	Jumping               bool
+	TimeSinceJump         float64
 }
 
 // Object represents an item in the game (player, obstacle, etc...)
@@ -79,18 +82,32 @@ func processInput(scene *Scene) {
 	if scene.Window.Pressed(pixelgl.KeyLeft) {
 		newVelX -= speed
 		scene.Player.sprite = scene.Sprites.left
+		if scene.Jumping {
+			scene.Player.sprite = scene.Sprites.jumpleft
+		}
 	}
 	if scene.Window.Pressed(pixelgl.KeyRight) {
 		newVelX += speed
 		scene.Player.sprite = scene.Sprites.right
+		if scene.Jumping {
+			scene.Player.sprite = scene.Sprites.jumpright
+		}
 	}
 	if !scene.Window.Pressed(pixelgl.KeyRight) && !scene.Window.Pressed(pixelgl.KeyLeft) {
 		scene.Player.sprite = scene.Sprites.forward
+		if scene.Jumping {
+			scene.Player.sprite = scene.Sprites.jump
+		}
 	}
-	if scene.Dead && scene.Window.Pressed(pixelgl.KeySpace) {
-		scene.Dead = false
-		scene.Player.position = scene.Window.Bounds().Center()
-		scene.Obstacles = []*Object{}
+	if scene.Window.Pressed(pixelgl.KeySpace) {
+		if scene.Dead {
+			scene.Dead = false
+			scene.Player.position = scene.Window.Bounds().Center()
+			scene.Obstacles = []*Object{}
+		} else if !scene.Jumping {
+			scene.Jumping = true
+			scene.TimeSinceJump = 0
+		}
 	}
 
 	player := scene.Player
@@ -113,6 +130,12 @@ func processInput(scene *Scene) {
 func updateState(scene *Scene) {
 	if scene.Dead {
 		return
+	}
+	if scene.Jumping {
+		scene.TimeSinceJump += scene.TimeSinceLastFrame
+		if scene.TimeSinceJump > jumpTime {
+			scene.Jumping = false
+		}
 	}
 	player := scene.Player
 	var lastIndex int
