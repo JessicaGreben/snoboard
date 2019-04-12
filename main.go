@@ -12,6 +12,7 @@ import (
 	"github.com/faiface/pixel/text"
 	"golang.org/x/image/colornames"
 	"golang.org/x/image/font/basicfont"
+	"storj.io/snoboard/audio"
 	"storj.io/snoboard/graphics"
 )
 
@@ -55,6 +56,7 @@ type Sprites struct {
 }
 
 func main() {
+	go audio.PlayBackgroundMusic()
 	pixelgl.Run(renderLoop)
 }
 
