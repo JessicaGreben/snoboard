@@ -32,6 +32,7 @@ type Scene struct {
 	CameraPosition        pixel.Vec
 	Player                *Object
 	Obstacles             []*Object
+	Difficulty            float64
 	Sprites               *Sprites
 	Dead                  bool
 	Jumping               bool
@@ -84,7 +85,7 @@ func renderLoop() {
 
 func updateScore(sc *Scene) {
 	distance := sc.Player.position.Y
-	score := distance * -1 /2
+	score := distance * -1 / 2
 
 	if distance > 0 {
 		score = 0
@@ -129,6 +130,7 @@ func processInput(scene *Scene) {
 		scene.Dead = false
 		scene.Player.position = scene.Window.Bounds().Center()
 		scene.Jumping = false
+		scene.Difficulty = 1
 		scene.Obstacles = []*Object{}
 	}
 
@@ -171,7 +173,7 @@ func updateState(scene *Scene) {
 	detectCollisions(scene)
 
 	// If it has been 1 second since last obstacle then create a new one
-	if scene.TimeSinceLastObstacle > 0.25 {
+	if scene.TimeSinceLastObstacle > scene.Difficulty {
 		randX := rand.Intn(2*windowWidth) - windowWidth
 		sprite := scene.Sprites.harddrive
 		if rand.Intn(2) == 0 {
@@ -184,6 +186,10 @@ func updateState(scene *Scene) {
 		}
 		scene.Obstacles = append(scene.Obstacles, newObj)
 		scene.TimeSinceLastObstacle = 0
+		scene.Difficulty -= 0.01
+		if scene.Difficulty < 0.25 {
+			scene.Difficulty = 0.25
+		}
 	}
 }
 
@@ -306,5 +312,7 @@ func initializeScene() *Scene {
 	}
 
 	scene.LastFrameTime = time.Now()
+
+	scene.Difficulty = 1
 	return scene
 }
