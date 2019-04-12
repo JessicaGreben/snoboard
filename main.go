@@ -40,15 +40,18 @@ type Scene struct {
 	Sprites               *Sprites
 	Dead                  bool
 	Jumping               bool
+	JumpSpeed             float64
+	GroundSpeed           float64
 	TimeSinceJump         float64
 	Background            *pixel.Sprite
 }
 
 // Object represents an item in the game (player, obstacle, etc...)
 type Object struct {
-	position pixel.Vec
-	velocity pixel.Vec
-	sprite   *pixel.Sprite
+	position     pixel.Vec
+	velocity     pixel.Vec
+	jumpvelocity pixel.Vec
+	sprite       *pixel.Sprite
 }
 
 // Sprites are all the images we use
@@ -110,8 +113,13 @@ func increaseDifficulty(scene *Scene) {
 	if scene.Difficulty < 0.5 {
 		scene.Level++
 		scene.Difficulty = 1
-		newYSpeed := scene.Player.velocity.Y * 1.5
-		scene.Player.velocity = pixel.V(scene.Player.velocity.X, newYSpeed)
+		scene.GroundSpeed = scene.GroundSpeed * 1.5
+		scene.JumpSpeed = scene.JumpSpeed * 1.5
+		if scene.Jumping {
+			scene.Player.velocity = pixel.V(scene.Player.velocity.X, -scene.JumpSpeed)
+		} else {
+			scene.Player.velocity = pixel.V(scene.Player.velocity.X, -scene.GroundSpeed)
+		}
 	}
 
 }
@@ -142,7 +150,7 @@ func processInput(scene *Scene) {
 	if scene.Window.Pressed(pixelgl.KeySpace) && !scene.Jumping {
 		scene.Jumping = true
 		scene.TimeSinceJump = 0
-		scene.Player.velocity = pixel.V(0, -jumpSpeed)
+		scene.Player.velocity = pixel.V(0, -scene.JumpSpeed)
 	}
 	if scene.Window.Pressed(pixelgl.KeyEnter) && scene.Dead {
 		scene.Dead = false
@@ -177,7 +185,7 @@ func updateState(scene *Scene) {
 		scene.TimeSinceJump += scene.TimeSinceLastFrame
 		if scene.TimeSinceJump > jumpTime {
 			scene.Jumping = false
-			scene.Player.velocity = pixel.V(0, -speed)
+			scene.Player.velocity = pixel.V(0, -scene.GroundSpeed)
 		}
 	}
 	player := scene.Player
@@ -271,8 +279,8 @@ func render(scene *Scene) {
 	scene.Window.SetMatrix(cameraMatrix)
 
 	scene.Window.Clear(colornames.Blueviolet)
-	mod := 100
-	bgoffset := pixel.V(player.position.X-float64(int(player.position.X)%mod), player.position.Y+float64(int(player.position.Y)%mod))
+	mod := 105
+	bgoffset := pixel.V(player.position.X-float64(int(player.position.X)%mod), player.position.Y-float64(int(player.position.Y)%mod))
 	scene.Background.Draw(scene.Window, pixel.IM.Scaled(pixel.V(0, 0), 5).Moved(bgoffset))
 
 	for _, o := range scene.Obstacles {
@@ -289,7 +297,9 @@ func render(scene *Scene) {
 		scene.Sprites.tomcruise.Draw(scene.Window, pixel.IM.Moved(player.position))
 		scene.Level = 0
 		scene.Difficulty = 1
-		scene.Player.velocity = pixel.V(0, -speed)
+		scene.GroundSpeed = speed
+		scene.JumpSpeed = jumpSpeed
+		scene.Player.velocity = pixel.V(0, -scene.GroundSpeed)
 	}
 	updateScore(scene)
 	scene.Window.Update()
@@ -322,10 +332,11 @@ func initializeScene() *Scene {
 		panic(err)
 	}
 	scene.Window = win
-
+	scene.GroundSpeed = speed
+	scene.JumpSpeed = jumpSpeed
 	scene.Player = &Object{
 		position: win.Bounds().Center(),
-		velocity: pixel.V(0, -speed),
+		velocity: pixel.V(0, -scene.GroundSpeed),
 	}
 
 	scene.Sprites = &Sprites{
