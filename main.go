@@ -68,11 +68,6 @@ type Sprites struct {
 	tomcruise *pixel.Sprite
 }
 
-// Scoreboard represents the object rendering the player's score and other related information
-type Scoreboard struct {
-	score string
-}
-
 func main() {
 	pixelgl.Run(renderLoop)
 }
