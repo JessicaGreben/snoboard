@@ -5,6 +5,7 @@ import (
 	_ "image/png"
 	"math"
 	"math/rand"
+	"strconv"
 	"time"
 
 	"github.com/faiface/pixel"
@@ -57,6 +58,11 @@ type Sprites struct {
 	wipeout   *pixel.Sprite
 }
 
+// Scoreboard represents the object rendering the player's score and other related information
+type Scoreboard struct {
+	score string
+}
+
 func main() {
 	pixelgl.Run(renderLoop)
 }
@@ -74,6 +80,22 @@ func renderLoop() {
 		updateState(scene)
 		render(scene)
 	}
+}
+
+func updateScore(sc *Scene) {
+	distance := sc.Player.position.Y
+	score := distance * -1 /2
+
+	if distance > 0 {
+		score = 0
+	}
+
+	basicAtlas := text.NewAtlas(basicfont.Face7x13, text.ASCII)
+	basicTxt := text.New(sc.CameraPosition.Add(pixel.V(750, 725)), basicAtlas)
+	basicTxt.Color = colornames.Black
+	fmt.Fprintf(basicTxt, "Score: %s\n", strconv.FormatFloat(score, 'f', 0, 64))
+
+	basicTxt.Draw(sc.Window, pixel.IM.Scaled(basicTxt.Orig, 2))
 }
 
 // processInput is where we process any input events from the keyboard.
@@ -237,6 +259,7 @@ func render(scene *Scene) {
 		player.sprite.Draw(scene.Window, pixel.IM.Moved(player.position))
 		basicTxt.Draw(scene.Window, pixel.IM.Scaled(basicTxt.Orig, 4))
 	}
+	updateScore(scene)
 	scene.Window.Update()
 }
 
