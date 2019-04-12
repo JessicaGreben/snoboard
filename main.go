@@ -19,7 +19,7 @@ const (
 	windowWidth  = 1024
 	windowHeight = 768
 	speed        = 300
-	jumpTime     = 1
+	jumpTime     = 1.5
 )
 
 // Scene represents the root game scene. The scene references graphic resources, objects and game state.
@@ -99,15 +99,15 @@ func processInput(scene *Scene) {
 			scene.Player.sprite = scene.Sprites.jump
 		}
 	}
-	if scene.Window.Pressed(pixelgl.KeySpace) {
-		if scene.Dead {
-			scene.Dead = false
-			scene.Player.position = scene.Window.Bounds().Center()
-			scene.Obstacles = []*Object{}
-		} else if !scene.Jumping {
-			scene.Jumping = true
-			scene.TimeSinceJump = 0
-		}
+	if scene.Window.Pressed(pixelgl.KeySpace) && !scene.Jumping {
+		scene.Jumping = true
+		scene.TimeSinceJump = 0
+	}
+	if scene.Window.Pressed(pixelgl.KeyEnter) && scene.Dead {
+		scene.Dead = false
+		scene.Player.position = scene.Window.Bounds().Center()
+		scene.Jumping = false
+		scene.Obstacles = []*Object{}
 	}
 
 	player := scene.Player
@@ -168,7 +168,7 @@ func updateState(scene *Scene) {
 func detectCollisions(scene *Scene) {
 	for _, obstacle := range scene.Obstacles {
 		if obstacle.sprite == scene.Sprites.harddrive && scene.Jumping {
-			break
+			continue
 		}
 		if intersectRect(scene.Player, obstacle) {
 			scene.Dead = true
