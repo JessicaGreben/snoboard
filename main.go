@@ -84,6 +84,10 @@ func processInput(scene *Scene) {
 	if !scene.Window.Pressed(pixelgl.KeyRight) && !scene.Window.Pressed(pixelgl.KeyLeft) {
 		scene.Player.sprite = scene.Sprites.forward
 	}
+	if scene.Dead && scene.Window.Pressed(pixelgl.KeySpace) {
+		scene.Dead = false
+		scene.Player.position = scene.Window.Bounds().Center()
+	}
 
 	player := scene.Player
 	if scene.Dead {
