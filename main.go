@@ -295,7 +295,13 @@ func render(scene *Scene) {
 		fmt.Fprintln(basicTxt, "DEAD!!!!")
 		player.sprite.Draw(scene.Window, pixel.IM.Moved(player.position))
 		basicTxt.Draw(scene.Window, pixel.IM.Scaled(basicTxt.Orig, 4))
-		scene.Sprites.tomcruise.Draw(scene.Window, pixel.IM.Moved(player.position))
+
+		tomCruiseLocation := pixel.Vec{
+			X: player.position.X,
+			Y: player.position.Y - 400,
+		}
+		scene.Sprites.tomcruise.Draw(scene.Window, pixel.IM.Scaled(pixel.V(0, 0), 2).Moved(tomCruiseLocation))
+
 		scene.Level = 0
 		scene.Difficulty = 1
 		scene.GroundSpeed = speed
