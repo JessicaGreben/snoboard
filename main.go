@@ -13,6 +13,7 @@ import (
 	"github.com/faiface/pixel/text"
 	"golang.org/x/image/colornames"
 	"golang.org/x/image/font/basicfont"
+	"storj.io/snoboard/audio"
 	"storj.io/snoboard/graphics"
 )
 
@@ -20,7 +21,8 @@ const (
 	windowWidth  = 1024
 	windowHeight = 768
 	speed        = 300
-	jumpTime     = 1.5
+	jumpSpeed    = 500
+	jumpTime     = 0.9
 )
 
 // Scene represents the root game scene. The scene references graphic resources, objects and game state.
@@ -38,6 +40,7 @@ type Scene struct {
 	Dead                  bool
 	Jumping               bool
 	TimeSinceJump         float64
+	Background            *pixel.Sprite
 }
 
 // Object represents an item in the game (player, obstacle, etc...)
@@ -66,6 +69,7 @@ type Scoreboard struct {
 }
 
 func main() {
+	go audio.PlayBackgroundMusic()
 	pixelgl.Run(renderLoop)
 }
 
@@ -138,6 +142,7 @@ func processInput(scene *Scene) {
 	if scene.Window.Pressed(pixelgl.KeySpace) && !scene.Jumping {
 		scene.Jumping = true
 		scene.TimeSinceJump = 0
+		scene.Player.velocity = pixel.V(0, -jumpSpeed)
 	}
 	if scene.Window.Pressed(pixelgl.KeyEnter) && scene.Dead {
 		scene.Dead = false
@@ -172,6 +177,7 @@ func updateState(scene *Scene) {
 		scene.TimeSinceJump += scene.TimeSinceLastFrame
 		if scene.TimeSinceJump > jumpTime {
 			scene.Jumping = false
+			scene.Player.velocity = pixel.V(0, -speed)
 		}
 	}
 	player := scene.Player
@@ -264,6 +270,10 @@ func render(scene *Scene) {
 	scene.Window.SetMatrix(cameraMatrix)
 
 	scene.Window.Clear(colornames.Blueviolet)
+	mod := 100
+	bgoffset := pixel.V(player.position.X-float64(int(player.position.X)%mod), player.position.Y+float64(int(player.position.Y)%mod))
+	scene.Background.Draw(scene.Window, pixel.IM.Scaled(pixel.V(0, 0), 5).Moved(bgoffset))
+
 	for _, o := range scene.Obstacles {
 		o.sprite.Draw(scene.Window, pixel.IM.Moved(o.position))
 	}
@@ -324,6 +334,13 @@ func initializeScene() *Scene {
 		jumpright: getSprite("jumpright"),
 		wipeout:   getSprite("wipeout"),
 	}
+
+	img := "graphics/snowtile.png"
+	bgPic, err := graphics.LoadPicture(img)
+	if err != nil {
+		panic(err)
+	}
+	scene.Background = pixel.NewSprite(bgPic, bgPic.Bounds())
 
 	scene.LastFrameTime = time.Now()
 
