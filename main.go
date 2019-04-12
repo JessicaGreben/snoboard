@@ -5,6 +5,7 @@ import (
 	_ "image/png"
 	"math"
 	"math/rand"
+	"strconv"
 	"time"
 
 	"github.com/faiface/pixel"
@@ -20,6 +21,8 @@ const (
 	windowWidth  = 1024
 	windowHeight = 768
 	speed        = 300
+	jumpSpeed    = 500
+	jumpTime     = 0.9
 )
 
 // Scene represents the root game scene. The scene references graphic resources, objects and game state.
@@ -31,8 +34,11 @@ type Scene struct {
 	CameraPosition        pixel.Vec
 	Player                *Object
 	Obstacles             []*Object
+	Difficulty            float64
 	Sprites               *Sprites
 	Dead                  bool
+	Jumping               bool
+	TimeSinceJump         float64
 }
 
 // Object represents an item in the game (player, obstacle, etc...)
@@ -55,6 +61,11 @@ type Sprites struct {
 	wipeout   *pixel.Sprite
 }
 
+// Scoreboard represents the object rendering the player's score and other related information
+type Scoreboard struct {
+	score string
+}
+
 func main() {
 	go audio.PlayBackgroundMusic()
 	pixelgl.Run(renderLoop)
@@ -75,23 +86,55 @@ func renderLoop() {
 	}
 }
 
+func updateScore(sc *Scene) {
+	distance := sc.Player.position.Y
+	score := distance * -1 / 2
+
+	if distance > 0 {
+		score = 0
+	}
+
+	basicAtlas := text.NewAtlas(basicfont.Face7x13, text.ASCII)
+	basicTxt := text.New(sc.CameraPosition.Add(pixel.V(750, 725)), basicAtlas)
+	basicTxt.Color = colornames.Black
+	fmt.Fprintf(basicTxt, "Score: %s\n", strconv.FormatFloat(score, 'f', 0, 64))
+
+	basicTxt.Draw(sc.Window, pixel.IM.Scaled(basicTxt.Orig, 2))
+}
+
 // processInput is where we process any input events from the keyboard.
 func processInput(scene *Scene) {
 	newVelX := float64(0)
 	if scene.Window.Pressed(pixelgl.KeyLeft) {
 		newVelX -= speed
 		scene.Player.sprite = scene.Sprites.left
+		if scene.Jumping {
+			scene.Player.sprite = scene.Sprites.jumpleft
+		}
 	}
 	if scene.Window.Pressed(pixelgl.KeyRight) {
 		newVelX += speed
 		scene.Player.sprite = scene.Sprites.right
+		if scene.Jumping {
+			scene.Player.sprite = scene.Sprites.jumpright
+		}
 	}
 	if !scene.Window.Pressed(pixelgl.KeyRight) && !scene.Window.Pressed(pixelgl.KeyLeft) {
 		scene.Player.sprite = scene.Sprites.forward
+		if scene.Jumping {
+			scene.Player.sprite = scene.Sprites.jump
+		}
 	}
-	if scene.Dead && scene.Window.Pressed(pixelgl.KeySpace) {
+	if scene.Window.Pressed(pixelgl.KeySpace) && !scene.Jumping {
+		scene.Jumping = true
+		scene.TimeSinceJump = 0
+		scene.Player.velocity = pixel.V(0, -jumpSpeed)
+	}
+	if scene.Window.Pressed(pixelgl.KeyEnter) && scene.Dead {
 		scene.Dead = false
 		scene.Player.position = scene.Window.Bounds().Center()
+		scene.Jumping = false
+		scene.Difficulty = 1
 		scene.Obstacles = []*Object{}
 	}
 
@@ -116,6 +159,13 @@ func updateState(scene *Scene) {
 	if scene.Dead {
 		return
 	}
+	if scene.Jumping {
+		scene.TimeSinceJump += scene.TimeSinceLastFrame
+		if scene.TimeSinceJump > jumpTime {
+			scene.Jumping = false
+			scene.Player.velocity = pixel.V(0, -speed)
+		}
+	}
 	player := scene.Player
 	var lastIndex int
 	for i, o := range scene.Obstacles {
@@ -128,7 +178,7 @@ func updateState(scene *Scene) {
 	detectCollisions(scene)
 
 	// If it has been 1 second since last obstacle then create a new one
-	if scene.TimeSinceLastObstacle > 0.25 {
+	if scene.TimeSinceLastObstacle > scene.Difficulty {
 		randX := rand.Intn(2*windowWidth) - windowWidth
 		sprite := scene.Sprites.harddrive
 		if rand.Intn(2) == 0 {
@@ -141,11 +191,18 @@ func updateState(scene *Scene) {
 		}
 		scene.Obstacles = append(scene.Obstacles, newObj)
 		scene.TimeSinceLastObstacle = 0
+		scene.Difficulty -= 0.01
+		if scene.Difficulty < 0.25 {
+			scene.Difficulty = 0.25
+		}
 	}
 }
 
 func detectCollisions(scene *Scene) {
 	for _, obstacle := range scene.Obstacles {
+		if obstacle.sprite == scene.Sprites.harddrive && scene.Jumping {
+			continue
+		}
 		if intersectRect(scene.Player, obstacle) {
 			scene.Dead = true
 		}
@@ -201,10 +258,10 @@ func render(scene *Scene) {
 	scene.Window.SetMatrix(cameraMatrix)
 
 	scene.Window.Clear(colornames.Blueviolet)
-	player.sprite.Draw(scene.Window, pixel.IM.Moved(player.position))
 	for _, o := range scene.Obstacles {
 		o.sprite.Draw(scene.Window, pixel.IM.Moved(o.position))
 	}
+	player.sprite.Draw(scene.Window, pixel.IM.Moved(player.position))
 
 	if scene.Dead {
 		atlas := text.NewAtlas(basicfont.Face7x13, text.ASCII)
@@ -213,6 +270,7 @@ func render(scene *Scene) {
 		player.sprite.Draw(scene.Window, pixel.IM.Moved(player.position))
 		basicTxt.Draw(scene.Window, pixel.IM.Scaled(basicTxt.Orig, 4))
 	}
+	updateScore(scene)
 	scene.Window.Update()
 }
 
@@ -259,5 +317,7 @@ func initializeScene() *Scene {
 	}
 
 	scene.LastFrameTime = time.Now()
+
+	scene.Difficulty = 1
 	return scene
 }
