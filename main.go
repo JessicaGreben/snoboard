@@ -167,6 +167,9 @@ func updateState(scene *Scene) {
 
 func detectCollisions(scene *Scene) {
 	for _, obstacle := range scene.Obstacles {
+		if obstacle.sprite == scene.Sprites.harddrive && scene.Jumping {
+			break
+		}
 		if intersectRect(scene.Player, obstacle) {
 			scene.Dead = true
 		}
