@@ -36,7 +36,7 @@ type Scene struct {
 	Player                *Object
 	Obstacles             []*Object
 	Difficulty            float64
-	Level				  float64
+	Level                 float64
 	Sprites               *Sprites
 	Dead                  bool
 	Jumping               bool
@@ -62,6 +62,7 @@ type Sprites struct {
 	jumpleft  *pixel.Sprite
 	jumpright *pixel.Sprite
 	wipeout   *pixel.Sprite
+	tomcruise *pixel.Sprite
 }
 
 // Scoreboard represents the object rendering the player's score and other related information
@@ -105,7 +106,7 @@ func updateScore(scene *Scene) {
 
 func increaseDifficulty(scene *Scene) {
 	scene.Difficulty -= scene.TimeSinceLastFrame * .05
-	
+
 	if scene.Difficulty < 0.5 {
 		scene.Level++
 		scene.Difficulty = 1
@@ -114,7 +115,6 @@ func increaseDifficulty(scene *Scene) {
 	}
 
 }
-
 
 // processInput is where we process any input events from the keyboard.
 func processInput(scene *Scene) {
@@ -206,7 +206,7 @@ func updateState(scene *Scene) {
 		scene.Obstacles = append(scene.Obstacles, newObj)
 		scene.TimeSinceLastObstacle = 0
 	}
-	
+
 	increaseDifficulty(scene)
 }
 
@@ -286,6 +286,7 @@ func render(scene *Scene) {
 		fmt.Fprintln(basicTxt, "DEAD!!!!")
 		player.sprite.Draw(scene.Window, pixel.IM.Moved(player.position))
 		basicTxt.Draw(scene.Window, pixel.IM.Scaled(basicTxt.Orig, 4))
+		scene.Sprites.tomcruise.Draw(scene.Window, pixel.IM.Moved(player.position))
 		scene.Level = 0
 		scene.Difficulty = 1
 		scene.Player.velocity = pixel.V(0, -speed)
@@ -337,6 +338,7 @@ func initializeScene() *Scene {
 		jumpleft:  getSprite("jumpleft"),
 		jumpright: getSprite("jumpright"),
 		wipeout:   getSprite("wipeout"),
+		tomcruise: getSprite("danger_zone"),
 	}
 
 	img := "graphics/snowtile.png"
