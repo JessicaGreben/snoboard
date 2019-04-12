@@ -28,6 +28,7 @@ const (
 // Scene represents the root game scene. The scene references graphic resources, objects and game state.
 type Scene struct {
 	Window                *pixelgl.Window
+	music                 *audio.Music
 	LastFrameTime         time.Time
 	TimeSinceLastFrame    float64
 	TimeSinceLastObstacle float64
@@ -35,6 +36,7 @@ type Scene struct {
 	Player                *Object
 	Obstacles             []*Object
 	Difficulty            float64
+	Level				  float64
 	Sprites               *Sprites
 	Dead                  bool
 	Jumping               bool
@@ -68,7 +70,6 @@ type Scoreboard struct {
 }
 
 func main() {
-	go audio.PlayBackgroundMusic()
 	pixelgl.Run(renderLoop)
 }
 
@@ -79,7 +80,6 @@ func renderLoop() {
 		scene.TimeSinceLastFrame = time.Since(scene.LastFrameTime).Seconds()
 		scene.LastFrameTime = time.Now()
 		scene.TimeSinceLastObstacle += scene.TimeSinceLastFrame
-
 		// Call the render pipeline.
 		processInput(scene)
 		updateState(scene)
@@ -87,21 +87,34 @@ func renderLoop() {
 	}
 }
 
-func updateScore(sc *Scene) {
-	distance := sc.Player.position.Y
-	score := distance * -1 / 2
-
+func updateScore(scene *Scene) {
+	distance := scene.Player.position.Y
+	score := distance * -1 / 3
 	if distance > 0 {
 		score = 0
 	}
 
 	basicAtlas := text.NewAtlas(basicfont.Face7x13, text.ASCII)
-	basicTxt := text.New(sc.CameraPosition.Add(pixel.V(750, 725)), basicAtlas)
+	basicTxt := text.New(scene.CameraPosition.Add(pixel.V(750, 725)), basicAtlas)
 	basicTxt.Color = colornames.Black
 	fmt.Fprintf(basicTxt, "Score: %s\n", strconv.FormatFloat(score, 'f', 0, 64))
-
-	basicTxt.Draw(sc.Window, pixel.IM.Scaled(basicTxt.Orig, 2))
+	fmt.Fprintf(basicTxt, "Level: %v\n", scene.Level)
+	fmt.Fprintf(basicTxt, "Obstacle Rate: %v\n", strconv.FormatFloat(scene.Difficulty, 'f', 3, 64))
+	basicTxt.Draw(scene.Window, pixel.IM.Scaled(basicTxt.Orig, 2))
 }
+
+func increaseDifficulty(scene *Scene) {
+	scene.Difficulty -= scene.TimeSinceLastFrame * .05
+	
+	if scene.Difficulty < 0.5 {
+		scene.Level++
+		scene.Difficulty = 1
+		newYSpeed := scene.Player.velocity.Y * 1.5
+		scene.Player.velocity = pixel.V(scene.Player.velocity.X, newYSpeed)
+	}
+
+}
+
 
 // processInput is where we process any input events from the keyboard.
 func processInput(scene *Scene) {
@@ -192,11 +205,9 @@ func updateState(scene *Scene) {
 		}
 		scene.Obstacles = append(scene.Obstacles, newObj)
 		scene.TimeSinceLastObstacle = 0
-		scene.Difficulty -= 0.01
-		if scene.Difficulty < 0.25 {
-			scene.Difficulty = 0.25
-		}
 	}
+	
+	increaseDifficulty(scene)
 }
 
 func detectCollisions(scene *Scene) {
@@ -206,6 +217,7 @@ func detectCollisions(scene *Scene) {
 		}
 		if intersectRect(scene.Player, obstacle) {
 			scene.Dead = true
+			go scene.music.PlayDeadSound()
 		}
 	}
 }
@@ -274,6 +286,9 @@ func render(scene *Scene) {
 		fmt.Fprintln(basicTxt, "DEAD!!!!")
 		player.sprite.Draw(scene.Window, pixel.IM.Moved(player.position))
 		basicTxt.Draw(scene.Window, pixel.IM.Scaled(basicTxt.Orig, 4))
+		scene.Level = 0
+		scene.Difficulty = 1
+		scene.Player.velocity = pixel.V(0, -speed)
 	}
 	updateScore(scene)
 	scene.Window.Update()
@@ -291,6 +306,9 @@ func getSprite(img string) *pixel.Sprite {
 
 func initializeScene() *Scene {
 	scene := &Scene{}
+
+	scene.music = audio.NewMusic()
+	go scene.music.PlayBackgroundMusic()
 
 	// Create the render window.
 	cfg := pixelgl.WindowConfig{
