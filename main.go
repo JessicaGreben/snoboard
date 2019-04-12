@@ -308,7 +308,7 @@ func render(scene *Scene) {
 }
 
 func getSprite(img string) *pixel.Sprite {
-	img = fmt.Sprintf("graphics/%s.png", img)
+	img = fmt.Sprintf("graphics/dj/%s.png", img)
 	playerSprite, err := graphics.LoadPicture(img)
 	if err != nil {
 		panic(err)
