@@ -20,7 +20,8 @@ const (
 	windowWidth  = 1024
 	windowHeight = 768
 	speed        = 300
-	jumpTime     = 1.5
+	jumpSpeed    = 500
+	jumpTime     = 0.9
 )
 
 // Scene represents the root game scene. The scene references graphic resources, objects and game state.
@@ -125,6 +126,7 @@ func processInput(scene *Scene) {
 	if scene.Window.Pressed(pixelgl.KeySpace) && !scene.Jumping {
 		scene.Jumping = true
 		scene.TimeSinceJump = 0
+		scene.Player.velocity = pixel.V(0, -jumpSpeed)
 	}
 	if scene.Window.Pressed(pixelgl.KeyEnter) && scene.Dead {
 		scene.Dead = false
@@ -159,6 +161,7 @@ func updateState(scene *Scene) {
 		scene.TimeSinceJump += scene.TimeSinceLastFrame
 		if scene.TimeSinceJump > jumpTime {
 			scene.Jumping = false
+			scene.Player.velocity = pixel.V(0, -speed)
 		}
 	}
 	player := scene.Player
