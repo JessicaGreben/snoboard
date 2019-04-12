@@ -225,10 +225,10 @@ func render(scene *Scene) {
 	scene.Window.SetMatrix(cameraMatrix)
 
 	scene.Window.Clear(colornames.Blueviolet)
-	player.sprite.Draw(scene.Window, pixel.IM.Moved(player.position))
 	for _, o := range scene.Obstacles {
 		o.sprite.Draw(scene.Window, pixel.IM.Moved(o.position))
 	}
+	player.sprite.Draw(scene.Window, pixel.IM.Moved(player.position))
 
 	if scene.Dead {
 		atlas := text.NewAtlas(basicfont.Face7x13, text.ASCII)
