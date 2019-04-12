@@ -28,6 +28,7 @@ const (
 // Scene represents the root game scene. The scene references graphic resources, objects and game state.
 type Scene struct {
 	Window                *pixelgl.Window
+	music                 *audio.Music
 	LastFrameTime         time.Time
 	TimeSinceLastFrame    float64
 	TimeSinceLastObstacle float64
@@ -69,7 +70,6 @@ type Scoreboard struct {
 }
 
 func main() {
-	go audio.PlayBackgroundMusic()
 	pixelgl.Run(renderLoop)
 }
 
@@ -217,6 +217,7 @@ func detectCollisions(scene *Scene) {
 		}
 		if intersectRect(scene.Player, obstacle) {
 			scene.Dead = true
+			go scene.music.PlayDeadSound()
 		}
 	}
 }
@@ -305,6 +306,9 @@ func getSprite(img string) *pixel.Sprite {
 
 func initializeScene() *Scene {
 	scene := &Scene{}
+
+	scene.music = audio.NewMusic()
+	go scene.music.PlayBackgroundMusic()
 
 	// Create the render window.
 	cfg := pixelgl.WindowConfig{
