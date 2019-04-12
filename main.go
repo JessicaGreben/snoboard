@@ -261,7 +261,7 @@ func intersectRect(object1 *Object, object2 *Object) bool {
 	minYOffset := object1.sprite.Frame().H()/2 + object2.sprite.Frame().H()/2
 
 	xOffset := (object1.position.X + object1.sprite.Frame().W()/2) - (object2.position.X + object2.sprite.Frame().W()/2)
-	yOffset := (object1.position.Y - object1.sprite.Frame().H()/2) - (object2.position.Y - object2.sprite.Frame().H()/2)
+	yOffset := (object1.position.Y + object1.sprite.Frame().H()/2) - (object2.position.Y + object2.sprite.Frame().H()/2)
 
 	xDiff := minXOffset - math.Abs(xOffset)
 	yDiff := minYOffset - math.Abs(yOffset)
