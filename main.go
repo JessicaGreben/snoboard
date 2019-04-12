@@ -90,6 +90,7 @@ func processInput(scene *Scene) {
 	if scene.Dead && scene.Window.Pressed(pixelgl.KeySpace) {
 		scene.Dead = false
 		scene.Player.position = scene.Window.Bounds().Center()
+		scene.Obstacles = []*Object{}
 	}
 
 	player := scene.Player
@@ -125,7 +126,7 @@ func updateState(scene *Scene) {
 	detectCollisions(scene)
 
 	// If it has been 1 second since last obstacle then create a new one
-	if scene.TimeSinceLastObstacle > 1 {
+	if scene.TimeSinceLastObstacle > 0.25 {
 		randX := rand.Intn(2*windowWidth) - windowWidth
 		sprite := scene.Sprites.harddrive
 		if rand.Intn(2) == 0 {
@@ -180,7 +181,7 @@ func intersectRect(object1 *Object, object2 *Object) bool {
 	minYOffset := object1.sprite.Frame().H()/2 + object2.sprite.Frame().H()/2
 
 	xOffset := (object1.position.X + object1.sprite.Frame().W()/2) - (object2.position.X + object2.sprite.Frame().W()/2)
-	yOffset := (object1.position.Y + object1.sprite.Frame().H()/2) - (object2.position.Y + object2.sprite.Frame().H()/2)
+	yOffset := (object1.position.Y - object1.sprite.Frame().H()/2) - (object2.position.Y - object2.sprite.Frame().H()/2)
 
 	xDiff := minXOffset - math.Abs(xOffset)
 	yDiff := minYOffset - math.Abs(yOffset)
