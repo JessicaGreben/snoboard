@@ -279,8 +279,9 @@ func render(scene *Scene) {
 	scene.Window.SetMatrix(cameraMatrix)
 
 	scene.Window.Clear(colornames.Blueviolet)
-	mod := 105
-	bgoffset := pixel.V(player.position.X-float64(int(player.position.X)%mod), player.position.Y-float64(int(player.position.Y)%mod))
+	modx := 220
+	mody := 440
+	bgoffset := pixel.V(player.position.X-float64(int(player.position.X)%modx), player.position.Y-float64(int(player.position.Y)%mody))
 	scene.Background.Draw(scene.Window, pixel.IM.Scaled(pixel.V(0, 0), 5).Moved(bgoffset))
 
 	for _, o := range scene.Obstacles {
